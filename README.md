@@ -9,6 +9,7 @@
 [![Frontend](https://img.shields.io/badge/UI-React%20%2B%20TypeScript-61DAFB?style=flat-square&logo=react&logoColor=black)](frontend/)
 [![Database](https://img.shields.io/badge/DB-PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)](docs/database.md)
 [![Pipeline](https://img.shields.io/badge/Pipeline-PySpark%20%2B%20Delta-E25A1C?style=flat-square&logo=apachespark&logoColor=white)](docs/data-pipeline.md)
+[![Orchestration](https://img.shields.io/badge/Orchestration-Apache%20Airflow-017CEE?style=flat-square&logo=apacheairflow&logoColor=white)](data-pipeline/airflow_home/dags/finvault_pipeline_dag.py)
 
 **Related:** Original Java/Spring Boot version — [developsumitkumar/FinVault](https://github.com/developsumitkumar/FinVault)
 
@@ -84,7 +85,7 @@ Most portfolio apps stop at CRUD. FinVault is designed to show **how fintech and
 | **Backend design** | Layered FastAPI (routes → services → repositories), Pydantic validation, Alembic migrations |
 | **Financial correctness** | Append-only ledger, wallet row locking, atomic transfers, KYC-gated operations |
 | **Product engineering** | Auth, onboarding, social connections, split bills, analytics, exports, admin workflows |
-| **Data engineering** | Medallion architecture, PySpark transforms, ADLS Gen2, Databricks + Delta Lake |
+| **Data engineering** | Medallion architecture, incremental + idempotent loading, Airflow orchestration, PySpark transforms, ADLS Gen2, Databricks + Delta Lake |
 | **Engineering discipline** | 55+ backend tests, pipeline tests, Docker Compose, CI, structured logging, deployment docs |
 
 ---
@@ -130,6 +131,18 @@ flowchart TB
 
 ---
 
+## Production data engineering practices
+
+This isn't a happy-path pipeline demo — it's built and documented the way a real production pipeline gets hardened over time.
+
+**Incremental & idempotent loading.** The export step tracks a watermark (last successfully processed timestamp) so every run only pulls new rows, not a full table scan. While building this, a real bug surfaced: skipping the Bronze file write when zero new rows arrived left a stale file on disk, which the next stage silently re-appended, duplicating data. Root-caused, fixed (always write Bronze, even empty, so "no new data" is represented truthfully), and verified with a three-run test (baseline → no-op run → run with exactly one new row). Full walkthrough: [`docs/data-pipeline-learning-notes.md`](docs/data-pipeline-learning-notes.md).
+
+**Orchestration, not just a script.** The pipeline runs as an Apache Airflow DAG — `export → transform`, dependency-ordered, with automatic retries (exponential backoff) for transient failures and failure alerting (email / Slack webhook callback) so a broken run doesn't fail silently overnight.
+
+**Cloud-target architecture.** The medallion layers are designed to run unchanged locally and on Azure: ADLS Gen2 for storage, Databricks for managed Spark compute, and Delta Lake for the table format (ACID transactions, `MERGE`/upsert, time travel). The ADLS upload path, Delta table schemas, and Databricks job/notebook templates are implemented and documented — see [`docs/azure-storage.md`](docs/azure-storage.md) and [`docs/databricks.md`](docs/databricks.md). Cloud deployment against a live Azure subscription is the current next milestone.
+
+---
+
 ## Feature highlights
 
 ### Wallet & ledger
@@ -167,10 +180,11 @@ flowchart TB
 
 ### Data platform
 - **CSV bulk import** with validation, deduplication, and error reporting
-- Local **PySpark** pipeline: Bronze → Silver → Gold
+- Local **PySpark** pipeline: Bronze → Silver → Gold, tested end-to-end
+- **Incremental, idempotent loading** — watermark-based extraction; a real duplicate-row bug was found, root-caused, and fixed (see [`docs/data-pipeline-learning-notes.md`](docs/data-pipeline-learning-notes.md))
+- **Apache Airflow orchestration** — DAG-scheduled runs, automatic retries with exponential backoff, and failure alerting (email / Slack)
 - **Ledger export** integrated into the medallion cycle (Phase 13)
-- Azure **ADLS Gen2** upload with manifests
-- **Databricks** job templates and Delta tables for cloud execution
+- **Azure ADLS Gen2 + Databricks + Delta Lake** — storage upload, Delta table schemas, and job/notebook templates implemented and documented; live cloud deployment is the next step
 - Data quality injection scripts for realistic pipeline testing
 
 ### Platform & ops
@@ -357,7 +371,9 @@ Built incrementally across **15 phases** — each scoped, tested, and documented
 
 | Phase | Focus | Status |
 |---:|---|:---:|
-| 0–5 | Foundation, ingestion, local PySpark, Azure, Databricks | ✅ |
+| 0–2 | Foundation, ingestion, data quality | ✅ |
+| 3 | Local PySpark pipeline (Bronze/Silver/Gold) | ✅ |
+| 4–5 | Azure ADLS Gen2 + Databricks + Delta Lake integration | ✅ Implemented · deployment pending |
 | 6 | Auth & users (JWT, roles, protected routes) | ✅ |
 | 7 | Wallet & ledger (append-only audit trail) | ✅ |
 | 8 | KYC & admin approval workflow | ✅ |
@@ -368,6 +384,8 @@ Built incrementally across **15 phases** — each scoped, tested, and documented
 | 13 | Pipeline reconnect (ledger → Bronze → Gold) | ✅ |
 | 14 | Docker, CI, deployment polish | ✅ |
 | 15 | UI reskin, passbook export, analytics upgrade, profile & avatars | 🔄 |
+| 16 | Payment cards (debit / credit / Black Card) | ✅ |
+| 17 | Incremental loading, idempotency fix, Airflow orchestration | ✅ |
 
 Details: [`PROJECT_PLAN.md`](PROJECT_PLAN.md) · Phase briefs: [`docs/phases/`](docs/phases/)
 
@@ -387,7 +405,7 @@ Deep dive: [`docs/architecture.md`](docs/architecture.md) · Schema: [`docs/data
 
 ## Interview narrative
 
-> *"I rebuilt my FinVault wallet platform in Python with FastAPI and PostgreSQL, using an append-only ledger for every financial event — KYC, transfers, expenses, and split-bill settlements. The React frontend covers the full product surface: onboarding, social connections, analytics, and statement-style passbook exports. The same operational data exports into a Bronze/Silver/Gold pipeline with PySpark locally and Delta Lake on Azure Databricks, so I can speak to both application engineering and data platform design from one codebase."*
+> *"I rebuilt my FinVault wallet platform in Python with FastAPI and PostgreSQL, using an append-only ledger for every financial event — KYC, transfers, expenses, and split-bill settlements. The React frontend covers the full product surface: onboarding, social connections, analytics, and statement-style passbook exports. The same operational data feeds a Bronze/Silver/Gold pipeline with watermark-based incremental loading, orchestrated by Apache Airflow with retries and failure alerting — I found and fixed a real duplicate-row idempotency bug while building it, and documented the whole diagnosis. The pipeline is architected for Delta Lake on Azure Databricks, with the ADLS/Databricks integration implemented and cloud deployment as my next milestone — so I can speak to both application engineering and production-minded data platform design from one codebase."*
 
 ---
 
@@ -400,6 +418,7 @@ Deep dive: [`docs/architecture.md`](docs/architecture.md) · Schema: [`docs/data
 | [`docs/database.md`](docs/database.md) | PostgreSQL schema |
 | [`docs/java-port-reference.md`](docs/java-port-reference.md) | Java → Python port mapping |
 | [`docs/data-pipeline.md`](docs/data-pipeline.md) | Local PySpark pipeline |
+| [`docs/data-pipeline-learning-notes.md`](docs/data-pipeline-learning-notes.md) | Incremental loading, idempotency bug walkthrough, Airflow retries & alerting |
 | [`docs/data-quality.md`](docs/data-quality.md) | CSV validation rules |
 | [`docs/azure-storage.md`](docs/azure-storage.md) | ADLS Gen2 integration |
 | [`docs/databricks.md`](docs/databricks.md) | Databricks jobs & Delta |
