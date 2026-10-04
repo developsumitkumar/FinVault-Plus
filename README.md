@@ -137,9 +137,100 @@ This isn't a happy-path pipeline demo — it's built and documented the way a re
 
 **Incremental & idempotent loading.** The export step tracks a watermark (last successfully processed timestamp) so every run only pulls new rows, not a full table scan. While building this, a real bug surfaced: skipping the Bronze file write when zero new rows arrived left a stale file on disk, which the next stage silently re-appended, duplicating data. Root-caused, fixed (always write Bronze, even empty, so "no new data" is represented truthfully), and verified with a three-run test (baseline → no-op run → run with exactly one new row). Full walkthrough: [`docs/data-pipeline-learning-notes.md`](docs/data-pipeline-learning-notes.md).
 
-**Orchestration, not just a script.** The pipeline runs as an Apache Airflow DAG — `export → transform`, dependency-ordered, with automatic retries (exponential backoff) for transient failures and failure alerting (email / Slack webhook callback) so a broken run doesn't fail silently overnight.
+**Orchestration, not just a script.** The pipeline runs as an Apache Airflow DAG — `export → transform`, dependency-ordered, with automatic retries for transient failures and a failure callback that writes to `pipeline_failures.log` (stand-in for email / Slack). See [Airflow orchestration](#apache-airflow-orchestration) below for local runs and UI screenshots.
 
 **Cloud-target architecture.** The medallion layers are designed to run unchanged locally and on Azure: ADLS Gen2 for storage, Databricks for managed Spark compute, and Delta Lake for the table format (ACID transactions, `MERGE`/upsert, time travel). The ADLS upload path, Delta table schemas, and Databricks job/notebook templates are implemented and documented — see [`docs/azure-storage.md`](docs/azure-storage.md) and [`docs/databricks.md`](docs/databricks.md). Cloud deployment against a live Azure subscription is the current next milestone.
+
+---
+
+## Apache Airflow orchestration
+
+The DAG `finvault_ledger_pipeline` schedules the same two modules you can run by hand — it does not reimplement pipeline logic:
+
+1. **`export_from_postgres`** — watermarked incremental export from PostgreSQL → Bronze CSV  
+2. **`run_bronze_silver_gold`** — PySpark Bronze → Silver → Gold transforms  
+
+| Setting | Value |
+|---|---|
+| Schedule | `0 2 * * *` (daily 02:00 UTC) |
+| Tasks | `export_from_postgres` → `run_bronze_silver_gold` |
+| Retries | 2 per task (`retry_delay` 30s) + failure log callback |
+| Tags | `finvault`, `local` |
+| DAG file | [`data-pipeline/airflow_home/dags/finvault_pipeline_dag.py`](data-pipeline/airflow_home/dags/finvault_pipeline_dag.py) |
+
+### What we verified locally
+
+Across scheduled, manual, and incremental triggers, every DAG run below finished **Success**. Export stays fast (~4s when only a few new ledger rows are pulled); Spark transforms typically finish in ~10–14s on this sample.
+
+<p align="center">
+  <img src="docs/screenshots/airflow-dag-runs.png" alt="Airflow Runs tab — scheduled and manual successes for finvault_ledger_pipeline" width="92%" />
+  <br />
+  <em>Runs — scheduled + manual DAG runs all Success; grid shows both tasks green across runs</em>
+</p>
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/airflow-export-task.png" alt="export_from_postgres task overview with zero failures" />
+      <br />
+      <sub><b>export_from_postgres</b> — BashOperator · 0 failures · ~4s duration</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/airflow-spark-task.png" alt="run_bronze_silver_gold task overview with zero failures" />
+      <br />
+      <sub><b>run_bronze_silver_gold</b> — BashOperator · 0 failures · ~10–12s duration</sub>
+    </td>
+  </tr>
+</table>
+
+Retries are real, not decorative. Early attempts can fail when workers race or Spark is still warming up; Airflow re-queues the task and the next try succeeds — visible in the Task Tries strip and logs:
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/airflow-scheduled-logs.png" alt="Scheduled run logs — try 2 success after try 1 failure" />
+      <br />
+      <sub><b>Scheduled run</b> — Try 1 failed → Try 2 Success; row counts in Spark logs</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/airflow-manual-logs.png" alt="Manual run logs — try 3 success after earlier failures" />
+      <br />
+      <sub><b>Manual run</b> — recovered on Try 3; same Bronze → Silver → Gold path</sub>
+    </td>
+  </tr>
+</table>
+
+**Run types exercised**
+
+| Run type | Example run id | What it proves |
+|---|---|---|
+| Scheduled | `scheduled__2026-10-02T02:00:00+00:00` | Cron schedule fires and completes end-to-end |
+| Manual | `manual__…` | UI / CLI trigger works the same path as overnight |
+| Incremental | `incremental__…` | After new ledger rows, export pulls only rows after the watermark (not a full table rescan) |
+| Partial re-run | clear `run_bronze_silver_gold` only | Spark can be re-run without re-exporting Bronze |
+
+### Run Airflow locally
+
+```bash
+# From repo root — project .venv must already have PySpark + Postgres drivers
+python3 -m venv .venv-airflow && source .venv-airflow/bin/activate
+pip install "apache-airflow==3.3.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.2/constraints-3.13.txt"
+
+export AIRFLOW_HOME="$(pwd)/data-pipeline/airflow_home"
+airflow standalone   # UI → http://127.0.0.1:8080
+```
+
+Login user is `admin`. The generated password is in  
+`data-pipeline/airflow_home/simple_auth_manager_passwords.json.generated` (gitignored).
+
+Unpause `finvault_ledger_pipeline`, or trigger a run from the UI / CLI:
+
+```bash
+airflow dags unpause finvault_ledger_pipeline
+airflow dags trigger finvault_ledger_pipeline
+```
+
+More context: [`data-pipeline/airflow_home/README.md`](data-pipeline/airflow_home/README.md) · [`docs/data-pipeline-learning-notes.md`](docs/data-pipeline-learning-notes.md)
 
 ---
 
@@ -176,13 +267,13 @@ This isn't a happy-path pipeline demo — it's built and documented the way a re
 ### Analytics
 - Real-time SQL aggregations: spending by category, monthly trends, income vs expense
 - **Balance trend**, activity breakdown, stat cards with sparklines
-- Tremor charts mapped to a consistent design system (`design.md`)
+- Tremor charts mapped to a consistent design system (`docs/design/design-system.md`)
 
 ### Data platform
 - **CSV bulk import** with validation, deduplication, and error reporting
 - Local **PySpark** pipeline: Bronze → Silver → Gold, tested end-to-end
 - **Incremental, idempotent loading** — watermark-based extraction; a real duplicate-row bug was found, root-caused, and fixed (see [`docs/data-pipeline-learning-notes.md`](docs/data-pipeline-learning-notes.md))
-- **Apache Airflow orchestration** — DAG-scheduled runs, automatic retries with exponential backoff, and failure alerting (email / Slack)
+- **Apache Airflow orchestration** — scheduled + manual DAG runs, task retries, and failure logging (see [Airflow section](#apache-airflow-orchestration) with UI screenshots)
 - **Ledger export** integrated into the medallion cycle (Phase 13)
 - **Azure ADLS Gen2 + Databricks + Delta Lake** — storage upload, Delta table schemas, and job/notebook templates implemented and documented; live cloud deployment is the next step
 - Data quality injection scripts for realistic pipeline testing
@@ -203,8 +294,9 @@ This isn't a happy-path pipeline demo — it's built and documented the way a re
 | **Backend** | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic, JWT, bcrypt |
 | **Database** | PostgreSQL 15 (ACID, constraints, row-level locking on wallets) |
 | **Data** | PySpark, Delta Lake, pandas, Azure Data Lake Storage Gen2, Databricks |
+| **Orchestration** | Apache Airflow 3 (local standalone DAG: export → Bronze/Silver/Gold) |
 | **Tooling** | Docker, Docker Compose, pytest, GitHub Actions, Makefile |
-| **Design** | Custom fintech design system (`design.md`) — light/dark theme toggle |
+| **Design** | Custom fintech design system (`docs/design/design-system.md`) — light/dark theme toggle |
 
 ---
 
@@ -290,6 +382,8 @@ python -m local.run_pipeline --export    # export DB → Bronze → Silver → G
 python -m local.verify_ledger_cycle --fixture   # verify transforms (no DB)
 ```
 
+To schedule the same pipeline with Airflow (UI on `:8080`), see [Apache Airflow orchestration](#apache-airflow-orchestration).
+
 See [`docs/data-pipeline.md`](docs/data-pipeline.md) · [`docs/databricks.md`](docs/databricks.md) · [`docs/azure-storage.md`](docs/azure-storage.md)
 
 ---
@@ -336,9 +430,12 @@ finvault-data-platform/
 │   ├── local/               # PySpark runner, export, verify
 │   ├── common/transforms/   # Shared Bronze/Silver/Gold logic
 │   └── databricks/          # Cloud job templates
-├── docs/                    # Architecture, deployment, schema, phases
+├── docs/                    # Rules, design, architecture, phases (see docs/README.md)
+│   ├── rules/               # AI_RULES, Cursor workflow
+│   ├── design/              # Design system + UI direction
+│   ├── features/            # Feature specs (e.g. cards)
+│   └── reference/           # Java port mapping
 ├── infra/azure/             # Azure infrastructure notes
-├── design.md                # UI design system (source of truth)
 ├── PROJECT_PLAN.md          # Phase roadmap and deliverables
 ├── docker-compose.yml
 └── Makefile
@@ -411,18 +508,22 @@ Deep dive: [`docs/architecture.md`](docs/architecture.md) · Schema: [`docs/data
 
 ## Documentation index
 
+Start at [`docs/README.md`](docs/README.md).
+
 | Document | Contents |
 |---|---|
 | [`docs/deployment.md`](docs/deployment.md) | Docker, Render, Vercel |
 | [`docs/architecture.md`](docs/architecture.md) | System design & layering |
 | [`docs/database.md`](docs/database.md) | PostgreSQL schema |
-| [`docs/java-port-reference.md`](docs/java-port-reference.md) | Java → Python port mapping |
+| [`docs/reference/java-port-reference.md`](docs/reference/java-port-reference.md) | Java → Python port mapping |
 | [`docs/data-pipeline.md`](docs/data-pipeline.md) | Local PySpark pipeline |
-| [`docs/data-pipeline-learning-notes.md`](docs/data-pipeline-learning-notes.md) | Incremental loading, idempotency bug walkthrough, Airflow retries & alerting |
+| [`docs/data-pipeline-learning-notes.md`](docs/data-pipeline-learning-notes.md) | Incremental loading, idempotency, Airflow |
 | [`docs/data-quality.md`](docs/data-quality.md) | CSV validation rules |
 | [`docs/azure-storage.md`](docs/azure-storage.md) | ADLS Gen2 integration |
 | [`docs/databricks.md`](docs/databricks.md) | Databricks jobs & Delta |
-| [`design.md`](design.md) | Frontend design system |
+| [`docs/design/design-system.md`](docs/design/design-system.md) | Frontend design system |
+| [`docs/features/cards.md`](docs/features/cards.md) | Payment cards spec |
+| [`docs/rules/AI_RULES.md`](docs/rules/AI_RULES.md) | AI / coding rules |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Setup, workflow, PR checklist |
 
 ---
