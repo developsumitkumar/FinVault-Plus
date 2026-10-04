@@ -1,13 +1,14 @@
 # FinVault Data Platform
 
-**A production-style fintech wallet built in Python — paired with a medallion data pipeline that takes the same financial events from app to cloud analytics.**
+**A production-style fintech wallet built in Python — paired with Customer Care AI (TypeSafe Jev + LLM) and a medallion data pipeline that takes the same financial events from app to cloud analytics.**
 
-> Full-stack software engineering meets data engineering in one portfolio project: real money-movement semantics (ledger, KYC, P2P transfers), a modern React product UI, and Bronze → Silver → Gold processing with PySpark, Azure, and Delta Lake.
+> Full-stack software engineering meets data engineering in one portfolio project: real money-movement semantics (ledger, KYC, P2P, cards, personal loans), an in-app Care assistant with System One triage, a support Kanban hierarchy, a modern React product UI, and Bronze → Silver → Gold processing with PySpark, Azure, and Delta Lake.
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![Backend](https://img.shields.io/badge/API-FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](backend/)
 [![Frontend](https://img.shields.io/badge/UI-React%20%2B%20TypeScript-61DAFB?style=flat-square&logo=react&logoColor=black)](frontend/)
 [![Database](https://img.shields.io/badge/DB-PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)](docs/database.md)
+[![Decisions](https://img.shields.io/badge/Triage-TypeSafe%20Jev-7C3AED?style=flat-square)](docs/architecture/jev-decision-layer.md)
 [![Pipeline](https://img.shields.io/badge/Pipeline-PySpark%20%2B%20Delta-E25A1C?style=flat-square&logo=apachespark&logoColor=white)](docs/data-pipeline.md)
 [![Orchestration](https://img.shields.io/badge/Orchestration-Apache%20Airflow-017CEE?style=flat-square&logo=apacheairflow&logoColor=white)](data-pipeline/airflow_home/dags/finvault_pipeline_dag.py)
 
@@ -84,9 +85,10 @@ Most portfolio apps stop at CRUD. FinVault is designed to show **how fintech and
 |---|---|
 | **Backend design** | Layered FastAPI (routes → services → repositories), Pydantic validation, Alembic migrations |
 | **Financial correctness** | Append-only ledger, wallet row locking, atomic transfers, KYC-gated operations |
-| **Product engineering** | Auth, onboarding, social connections, split bills, analytics, exports, admin workflows |
+| **Product engineering** | Auth, onboarding, social connections, split bills, analytics, exports, admin workflows, Care AI + support Kanban |
 | **Data engineering** | Medallion architecture, incremental + idempotent loading, Airflow orchestration, PySpark transforms, ADLS Gen2, Databricks + Delta Lake |
-| **Engineering discipline** | 55+ backend tests, pipeline tests, Docker Compose, CI, structured logging, deployment docs |
+| **Decision systems** | TypeSafe Jev (System One triage) + local LLM for Care replies; deterministic loan math |
+| **Engineering discipline** | Backend + pipeline tests, Docker Compose, CI, structured logging, deployment docs |
 
 ---
 
@@ -95,16 +97,19 @@ Most portfolio apps stop at CRUD. FinVault is designed to show **how fintech and
 ```mermaid
 flowchart TB
     subgraph Client["Client Layer"]
-        UI["React + Vite + TypeScript<br/>Tailwind · Tremor · Framer Motion"]
+        UI["React customer app<br/>wallet · loans · Help · Care AI"]
+        SUP["React Care console<br/>Kanban · notes · loan limits"]
     end
 
     subgraph API["Application Layer"]
         FAST["FastAPI REST API<br/>JWT · OpenAPI · Pydantic"]
-        SVC["Services<br/>Ledger · KYC · Transfers · Splits"]
+        SVC["Services<br/>Ledger · KYC · Transfers · Loans · Support"]
+        JEV["DecisionClient<br/>TypeSafe Jev / stub"]
+        LLM["LLM<br/>Ollama / stub"]
     end
 
     subgraph Ops["Operational Store"]
-        PG[("PostgreSQL<br/>users · wallets · ledger_entries<br/>kyc · connections · splits")]
+        PG[("PostgreSQL<br/>wallets · ledger · tickets<br/>loans · assistant_messages")]
     end
 
     subgraph Pipeline["Medallion Pipeline"]
@@ -118,7 +123,13 @@ flowchart TB
         DBX["Databricks + Delta Lake"]
     end
 
-    UI --> FAST --> SVC --> PG
+    UI --> FAST
+    SUP --> FAST
+    FAST --> SVC --> PG
+    FAST --> JEV
+    FAST --> LLM
+    SVC --> JEV
+    LLM --> SVC
     PG -->|export| BRZ --> SLV --> GLD
     BRZ --> ADLS
     SLV --> DBX
@@ -127,7 +138,7 @@ flowchart TB
     GLD -->|scale analytics| UI
 ```
 
-**Data flow in one sentence:** users move money in the app → every event lands in an immutable ledger → exports feed Bronze/Silver/Gold → the same story is visible in real-time SQL dashboards and batch analytics at scale.
+**Data flow in one sentence:** users move money in the app → every event lands in an immutable ledger → Care AI / Jev triage support → exports feed Bronze/Silver/Gold → the same story is visible in real-time SQL dashboards and batch analytics at scale.
 
 ---
 
@@ -234,6 +245,57 @@ More context: [`data-pipeline/airflow_home/README.md`](data-pipeline/airflow_hom
 
 ---
 
+## Customer Care AI (TypeSafe Jev)
+
+Showcase path: **System One decisions (Jev) for routing**, **deterministic code for money math**, **LLM only for grounded prose**.
+
+Support triage uses **TypeSafe Jev** via OpenRouter’s Decisions API for sub-second structured answers — **category**, **urgency**, and **needs_human** — while a generative LLM (local **Ollama**, or a deterministic **stub** when Ollama is down) writes customer-facing replies. Personal loan eligibility and EMI are computed in services; the assistant explains them and routes limit disputes through a human hierarchy on a shared Kanban (**agent → manager → owner**). Help tickets never auto-skip the agent queue.
+
+<p align="center">
+  <img src="docs/screenshots/jev-cinematic.gif" alt="FinVault Care cinematic — customer request through TypeSafe Jev decision layer" width="92%" />
+  <br />
+  <em>Care cinematic (animated) — request enters FinVault Care and flows through Jev</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/jev-decision-vs-generation.jpg" alt="FinVault Care — Decision vs Generation: Jev routes, SQL owns money facts, LLM writes grounded replies" width="92%" />
+  <br />
+  <em>Decision vs generation — Jev routes; services own balances/EMI; the LLM only narrates tool context</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/jev-request-path.jpg" alt="FinVault Care — Request path from customer message through DecisionClient to AI reply or agent→manager→owner Kanban" width="92%" />
+  <br />
+  <em>Request path — DecisionClient (Jev or stub) → AI answer with tools, or human ticket on the Care Kanban</em>
+</p>
+
+<p align="center">
+  <strong>▶ Demo video — TypeSafe Jev in FinVault Care</strong><br />
+  <a href="docs/screenshots/jev.mp4">Watch <code>docs/screenshots/jev.mp4</code></a>
+  <br />
+  <em>Full walkthrough (MP4 opens from the repo — GitHub README does not autoplay video)</em>
+</p>
+
+| Layer | Role |
+|---|---|
+| **Jev** (`DecisionClient`) | Routes tickets & assistant handoffs — never invents balances or EMI |
+| **Tools + SQL** | Wallet, ledger, cards, loans, limit-increase overrides |
+| **LLM** | Prose + optional tables/charts/follow-ups grounded in tool data |
+| **Care Kanban** | Sticky assign, escalate, private notes; managers/owners approve loan limit increases with audit |
+
+**Local demo**
+
+```bash
+make seed-support          # 1 owner · 2 managers · 10 agents
+make seed-support-tickets  # optional sample tickets
+```
+
+Login toggle on `/login` → **Support portal**. Env: `DECISION_PROVIDER=jev` + `OPENROUTER_API_KEY` for live Jev; without a key the app falls back to the stub (same interface). `LLM_PROVIDER=ollama` for freer chat wording.
+
+Architecture: [`docs/architecture/jev-decision-layer.md`](docs/architecture/jev-decision-layer.md) · Spec: [`docs/features/customer-care-ai.md`](docs/features/customer-care-ai.md)
+
+---
+
 ## Feature highlights
 
 ### Wallet & ledger
@@ -253,6 +315,14 @@ More context: [`data-pipeline/airflow_home/README.md`](data-pipeline/airflow_hom
 - **External expense payments** with purpose and category
 - **Split bills** — create group expenses, invite members, settle shares via ledger transfers
 - Insufficient balance and KYC checks enforced server-side
+
+### Customer Care & personal loans
+- **Dual portals** — customer app vs Care console (role-gated login)
+- **Support hierarchy** — 10 agents → 2 managers → 1 owner; sticky auto-assign; escalate with audit; handed-off tickets stay visible (view only); private staff notes
+- **Jev triage** on every ticket and Care chat turn (category, urgency, `needs_human`) with stub fallback for CI/offline
+- **In-app Care AI widget** — multi-turn, account-aware (balance, last N txs, category spend by month, cards, loans, transfers) + suggestion chips + “talk to an agent” handoff
+- **Personal loans** — activity-based max / APR / EMI schedule; apply & pay EMI from wallet
+- **Limit increases (Phase G)** — customer request → ticket auto-routed to manager → manager/owner approve/reject with audit; agents cannot invent a higher max in chat
 
 ### Social graph
 - Connection requests (send, accept, reject, withdraw, unfriend)
@@ -293,6 +363,8 @@ More context: [`data-pipeline/airflow_home/README.md`](data-pipeline/airflow_hom
 | **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query, React Hook Form, Zod, Tremor, Framer Motion, Lucide |
 | **Backend** | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic, JWT, bcrypt |
 | **Database** | PostgreSQL 15 (ACID, constraints, row-level locking on wallets) |
+| **Decisions** | TypeSafe Jev via OpenRouter Decisions API (`DecisionClient` + local stub) |
+| **Care LLM** | Ollama (local) or deterministic stub for CI / offline |
 | **Data** | PySpark, Delta Lake, pandas, Azure Data Lake Storage Gen2, Databricks |
 | **Orchestration** | Apache Airflow 3 (local standalone DAG: export → Bronze/Silver/Gold) |
 | **Tooling** | Docker, Docker Compose, pytest, GitHub Actions, Makefile |
@@ -319,12 +391,24 @@ docker compose up --build
 
 ### Demo accounts
 
+**Customer portal** (`/login` → Customer)
+
 | Account | Email | Password | Notes |
 |---|---|---|---|
 | **Admin** | `sumit@test.com` | `123456` | KYC approved · Admin KYC queue |
-| **Seeded user** | `user0001@finvault.seed` | `password123456` | After running `make seed-demo` |
+| **Seeded user** | `user0001@finvault.seed` | `password123456` | After `make seed-demo` |
 
 Register a new user to walk through onboarding: wallet opens with a **$10,000** balance and an opening ledger entry.
+
+**Support / Care portal** (`/login` → Support) — after `make seed-support`
+
+| Role | Email | Password |
+|---|---|---|
+| **Owner** | `owner@finvault.support` | `SupportPass123!` |
+| **Manager** | `manager01@finvault.support` | `SupportPass123!` |
+| **Agent** | `agent01@finvault.support` … `agent10@…` | `SupportPass123!` |
+
+Hierarchy: owner → manager01 (agents 01–05) / manager02 (agents 06–10). Use `/support/board` for the Kanban and `/support/loan-limits` for limit approvals.
 
 ### Rich demo dataset (optional)
 
@@ -400,7 +484,7 @@ make verify-ledger     # end-to-end ledger cycle (fixture mode)
 
 | Suite | Coverage |
 |---|---|
-| Backend API | Auth, ledger, KYC, transfers, payments, connections, splits, imports, analytics |
+| Backend API | Auth, ledger, KYC, transfers, payments, connections, splits, imports, analytics, cards, support, loans, assistant, Jev stub |
 | Frontend | `tsc` + Vite production build |
 | Pipeline | Bronze/Silver/Gold transforms, ledger export cycle |
 | CI | Runs on every push/PR to `main` |
@@ -414,27 +498,32 @@ finvault-data-platform/
 ├── backend/                 # FastAPI application
 │   ├── app/
 │   │   ├── api/routes/      # REST endpoints
-│   │   ├── services/        # Business logic (ledger, KYC, transfers, …)
+│   │   ├── services/        # Business logic
+│   │   │   ├── decisions/   # Jev + stub DecisionClient
+│   │   │   ├── assistant/   # Care AI tools, intent, chat
+│   │   │   ├── llm/         # Ollama + stub reply clients
+│   │   │   └── …            # ledger, KYC, transfers, loans, support
 │   │   ├── repositories/    # Data access
 │   │   ├── models/          # SQLAlchemy ORM
 │   │   └── schemas/         # Pydantic request/response models
 │   ├── alembic/             # Database migrations
-│   ├── scripts/             # Seed data, avatar backfill, data quality
+│   ├── scripts/             # Seed data, support staff, data quality
 │   └── tests/               # pytest suite
 ├── frontend/                # React SPA
 │   └── src/
-│       ├── pages/           # Dashboard, Wallet, Passbook, Analytics, …
-│       ├── components/      # UI library + shared components
-│       └── hooks/           # TanStack Query hooks
+│       ├── pages/           # Customer app + support/ Care console
+│       ├── components/      # UI + AssistantWidget
+│       └── auth/            # Portal gates (customer vs support)
 ├── data-pipeline/           # Medallion pipeline
 │   ├── local/               # PySpark runner, export, verify
 │   ├── common/transforms/   # Shared Bronze/Silver/Gold logic
+│   ├── airflow_home/        # Local Airflow DAG + config
 │   └── databricks/          # Cloud job templates
 ├── docs/                    # Rules, design, architecture, phases (see docs/README.md)
-│   ├── rules/               # AI_RULES, Cursor workflow
+│   ├── architecture/        # Jev decision-layer diagrams
+│   ├── features/            # Cards, customer-care-ai
 │   ├── design/              # Design system + UI direction
-│   ├── features/            # Feature specs (e.g. cards)
-│   └── reference/           # Java port mapping
+│   └── rules/               # AI_RULES, Cursor workflow
 ├── infra/azure/             # Azure infrastructure notes
 ├── PROJECT_PLAN.md          # Phase roadmap and deliverables
 ├── docker-compose.yml
@@ -447,7 +536,7 @@ finvault-data-platform/
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /api/auth/register`, `POST /api/auth/login` |
+| Auth | `POST /api/auth/register`, `POST /api/auth/login` (customer / support portal) |
 | Profile | `GET/PUT /api/user/profile`, `GET /api/user/search`, avatar upload/preset |
 | Ledger | `GET /api/ledger/passbook`, `/summary`, `/category`, `/monthly`, `/monthly-flow` |
 | KYC | `POST /api/kyc/submit`, `GET /api/kyc/status`, `GET /api/kyc/history` |
@@ -455,6 +544,11 @@ finvault-data-platform/
 | Payments | `POST /api/payments/initiate`, `GET /api/payments/my` |
 | Connections | `POST /api/connections/request`, `GET /api/connections/my`, accept/reject/… |
 | Split bills | `POST /api/split-bills`, `GET /api/split-bills/my`, settle |
+| Cards | Catalog + issue / freeze / billing surfaces under `/api/cards` |
+| Loans | `GET /api/loans/offer`, apply, pay EMI, `POST /api/loans/limit-requests` |
+| Help tickets | `POST /api/tickets`, list/detail/messages (customer) |
+| Care AI | `POST /api/assistant/chat`, sessions |
+| Support | `/api/support/board`, escalate, notes, `/api/support/loan-limit-requests` |
 | Admin | `GET /api/admin/kyc/pending`, approve, reject |
 | Import | `POST /api/imports/preview`, confirm |
 
@@ -483,8 +577,11 @@ Built incrementally across **15 phases** — each scoped, tested, and documented
 | 15 | UI reskin, passbook export, analytics upgrade, profile & avatars | 🔄 |
 | 16 | Payment cards (debit / credit / Black Card) | ✅ |
 | 17 | Incremental loading, idempotency fix, Airflow orchestration | ✅ |
+| Care A–D | Support roles, Kanban, Jev triage, escalate hierarchy | ✅ |
+| Care E–F | Personal loans + customer Care AI widget | ✅ |
+| Care G | Loan limit-increase approvals + README / Jev portfolio story | ✅ |
 
-Details: [`PROJECT_PLAN.md`](PROJECT_PLAN.md) · Phase briefs: [`docs/phases/`](docs/phases/)
+Details: [`PROJECT_PLAN.md`](PROJECT_PLAN.md) · Care spec: [`docs/features/customer-care-ai.md`](docs/features/customer-care-ai.md) · Phase briefs: [`docs/phases/`](docs/phases/)
 
 ---
 
@@ -493,16 +590,17 @@ Details: [`PROJECT_PLAN.md`](PROJECT_PLAN.md) · Phase briefs: [`docs/phases/`](
 1. **Ledger as source of truth** — balances are derived from immutable entries, not ad-hoc updates.
 2. **Transactional integrity** — wallet debits use row locks inside a single DB transaction.
 3. **Separation of concerns** — routes never query the DB; services own business rules.
-4. **Medallion for scale** — operational Postgres for real-time; Gold tables for heavy analytics.
-5. **Same transforms everywhere** — `data-pipeline/common/transforms/` runs locally and on Databricks.
+4. **Decisions ≠ generation** — Jev/stub owns triage routing; the LLM only narrates tool-grounded facts; loan EMI stays in deterministic code.
+5. **Medallion for scale** — operational Postgres for real-time; Gold tables for heavy analytics.
+6. **Same transforms everywhere** — `data-pipeline/common/transforms/` runs locally and on Databricks.
 
-Deep dive: [`docs/architecture.md`](docs/architecture.md) · Schema: [`docs/database.md`](docs/database.md)
+Deep dive: [`docs/architecture.md`](docs/architecture.md) · Jev: [`docs/architecture/jev-decision-layer.md`](docs/architecture/jev-decision-layer.md) · Schema: [`docs/database.md`](docs/database.md)
 
 ---
 
 ## Interview narrative
 
-> *"I rebuilt my FinVault wallet platform in Python with FastAPI and PostgreSQL, using an append-only ledger for every financial event — KYC, transfers, expenses, and split-bill settlements. The React frontend covers the full product surface: onboarding, social connections, analytics, and statement-style passbook exports. The same operational data feeds a Bronze/Silver/Gold pipeline with watermark-based incremental loading, orchestrated by Apache Airflow with retries and failure alerting — I found and fixed a real duplicate-row idempotency bug while building it, and documented the whole diagnosis. The pipeline is architected for Delta Lake on Azure Databricks, with the ADLS/Databricks integration implemented and cloud deployment as my next milestone — so I can speak to both application engineering and production-minded data platform design from one codebase."*
+> *"I rebuilt my FinVault wallet platform in Python with FastAPI and PostgreSQL, using an append-only ledger for every financial event — KYC, transfers, expenses, cards, and personal loans. On top of that I built Customer Care: TypeSafe Jev does System One triage (category, urgency, needs-human) while a local LLM writes grounded answers from account tools, and a support Kanban escalates agent → manager → owner — including audited loan limit-increase approvals. The React frontend covers the full product surface plus a Care console. The same operational data feeds a Bronze/Silver/Gold pipeline with watermark-based incremental loading, orchestrated by Apache Airflow — I found and fixed a real duplicate-row idempotency bug while building it. The pipeline targets Delta Lake on Azure Databricks, with ADLS/Databricks integration implemented and cloud deployment as the next milestone — so I can speak to application engineering, decision systems, and production-minded data platforms from one codebase."*
 
 ---
 
@@ -514,6 +612,8 @@ Start at [`docs/README.md`](docs/README.md).
 |---|---|
 | [`docs/deployment.md`](docs/deployment.md) | Docker, Render, Vercel |
 | [`docs/architecture.md`](docs/architecture.md) | System design & layering |
+| [`docs/architecture/jev-decision-layer.md`](docs/architecture/jev-decision-layer.md) | **Jev** DecisionClient, call sites, fallbacks |
+| [`docs/features/customer-care-ai.md`](docs/features/customer-care-ai.md) | Care AI + support + loans spec (phases A–G) |
 | [`docs/database.md`](docs/database.md) | PostgreSQL schema |
 | [`docs/reference/java-port-reference.md`](docs/reference/java-port-reference.md) | Java → Python port mapping |
 | [`docs/data-pipeline.md`](docs/data-pipeline.md) | Local PySpark pipeline |
