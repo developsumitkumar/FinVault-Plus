@@ -23,46 +23,119 @@
 ## Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" alt="FinVault dashboard — wallet balance, quick actions, and recent passbook" width="92%" />
+  <img src="docs/screenshots/finvault-tour.gif" alt="Animated walkthrough of FinVault: landing, home, insights, passbook, send, cards, loans, people and help" width="92%" />
   <br />
-  <em>Dashboard — wallet overview, KYC status, quick actions, and recent ledger activity</em>
+  <em>A 40-second tour: landing → home → insights → passbook (page tour playing) → send → cards → loans → people → Ask Jev</em>
+  <br />
+  <sub><a href="docs/screenshots/finvault-tour.mp4">Watch the higher-quality MP4</a></sub>
 </p>
+
+<p align="center">
+  <img src="docs/screenshots/landing.png" alt="FinVault landing page with particle flow-field hero" width="92%" />
+  <br />
+  <em>Landing: "the ledger in motion" particle hero with live API health</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/page-tour.png" alt="Animated page tour on the Activity page showing a double-entry transfer" width="92%" />
+  <br />
+  <em>Page tours: every signed-in page opens with a chaptered motion explainer of what it does (hide it once and it stays folded)</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="FinVault dashboard with vault balance panel, cards and live activity" width="92%" />
+  <br />
+  <em>Home: vault balance panel, cards, 30-day stats and live ledger activity</em>
+</p>
+
+### Insights & passbook
 
 <table>
   <tr>
     <td width="50%">
-      <img src="docs/screenshots/analytics.png" alt="Analytics page with balance trend and spending charts" />
+      <img src="docs/screenshots/analytics.png" alt="Insights overview with balance forecast and KPIs" />
       <br />
-      <sub><b>Analytics</b> — balance trend, category spending, income vs expense</sub>
+      <sub><b>Insights · Overview</b>: balance forecast, KPIs, money-flow Sankey</sub>
     </td>
     <td width="50%">
-      <img src="docs/screenshots/passbook.png" alt="Passbook with date filters and export" />
+      <img src="docs/screenshots/insights-spending.png" alt="Insights spending tab with category donut and mix over time" />
       <br />
-      <sub><b>Passbook</b> — statement-style filters, CSV / Excel / PDF export</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <img src="docs/screenshots/connections.png" alt="Connections page with user search and social graph" />
-      <br />
-      <sub><b>Connections</b> — discover users, manage requests, social-style network</sub>
-    </td>
-    <td width="50%">
-      <img src="docs/screenshots/split-bills.png" alt="Split bills wizard and settlement progress" />
-      <br />
-      <sub><b>Split bills</b> — multi-step create flow and settlement tracking</sub>
+      <sub><b>Insights · Spending</b>: donut, category mix, treemap, movers</sub>
     </td>
   </tr>
   <tr>
     <td width="50%">
-      <img src="docs/screenshots/profile.png" alt="Profile page with avatar picker and upload" />
+      <img src="docs/screenshots/insights-patterns.png" alt="Insights patterns tab with calendar and hour heatmaps" />
       <br />
-      <sub><b>Profile</b> — animated avatars, photo upload, account details</sub>
+      <sub><b>Insights · Patterns</b>: calendar and hour heatmaps, outliers, recurring payments</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/passbook.png" alt="Passbook with search, filters, pagination and export" />
+      <br />
+      <sub><b>Passbook</b>: search, filter chips, 15 per page, PDF / Excel / CSV / JSON export</sub>
+    </td>
+  </tr>
+</table>
+
+### Move money
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/send-money.png" alt="Send money composer with recipient chips, amount and funding sources" />
+      <br />
+      <sub><b>Send</b>: pick anyone, big amount entry, wallet / debit / credit tiles with live limits, review → receipt</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/split-bills.png" alt="Split bills with live pie preview and bill cards" />
+      <br />
+      <sub><b>Split bills</b>: live share preview, email invites, progress rings, pay-your-share</sub>
+    </td>
+  </tr>
+</table>
+
+### Products
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/cards.png" alt="Cards page with 3D card, freeze switch and limits" />
+      <br />
+      <sub><b>Cards</b>: 3D flip card, freeze switch, limit meters, statements, road to Black, catalog</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/loans.png" alt="Loans page with EMI progress ring, balance chart and schedule" />
+      <br />
+      <sub><b>Loans</b>: EMI progress, balance chart, schedule, transparent offer formula, limit requests</sub>
+    </td>
+  </tr>
+</table>
+
+### People, account & help
+
+<table>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/connections.png" alt="People page with network orbit, requests inbox and network grid" />
+      <br />
+      <sub><b>People</b>: requests inbox, network grid with Pay / Split shortcuts, discovery with notes</sub>
+    </td>
+    <td width="50%">
+      <img src="docs/screenshots/profile.png" alt="Account page with identity panel, avatar studio and preferences" />
+      <br />
+      <sub><b>Account</b>: identity panel, avatar studio with drag-and-drop, KYC history, preferences</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="docs/screenshots/help.png" alt="Help page with Ask Jev, topics and tickets" />
+      <br />
+      <sub><b>Help</b>: Ask Jev inline, topic tiles, tickets with escalation ladder</sub>
     </td>
     <td width="50%">
       <img src="docs/screenshots/login.png" alt="Login page" />
       <br />
-      <sub><b>Auth</b> — split-hero login with light / dark theme</sub>
+      <sub><b>Auth</b>: flow-field split screen, customer and support portals</sub>
     </td>
   </tr>
 </table>
@@ -156,22 +229,49 @@ This isn't a happy-path pipeline demo — it's built and documented the way a re
 
 ## Apache Airflow orchestration
 
-The DAG `finvault_ledger_pipeline` schedules the same two modules you can run by hand — it does not reimplement pipeline logic:
+The DAG `finvault_ledger_pipeline` schedules the same modules you can run by hand — it does not reimplement pipeline logic:
 
-1. **`export_from_postgres`** — watermarked incremental export from PostgreSQL → Bronze CSV  
-2. **`run_bronze_silver_gold`** — PySpark Bronze → Silver → Gold transforms  
+1. **`export_from_postgres`** — watermarked incremental export from PostgreSQL → Bronze CSV (inclusive boundary, so late or same-timestamp rows are never skipped)
+2. **`quality_gate`** — 16 SQL data-quality checks on the ledger; fails the run only on *blocking* checks (see below)
+3. **`run_bronze_silver_gold`** — PySpark Bronze → Silver (idempotent append) → Gold; records timing and row counts in `pipeline_runs`
 
 | Setting | Value |
 |---|---|
-| Schedule | `0 2 * * *` (daily 02:00 UTC) |
-| Tasks | `export_from_postgres` → `run_bronze_silver_gold` |
+| Schedule | `0 2 * * *` (daily 02:00 UTC) · `max_active_runs=1` (runs share one local lake) |
+| Tasks | `export_from_postgres` → `quality_gate` → `run_bronze_silver_gold` |
+| Run options | trigger conf `{"full_refresh": true}` ignores the watermark and rebuilds Silver |
 | Retries | 2 per task (`retry_delay` 30s) + failure log callback |
-| Tags | `finvault`, `local` |
+| Lineage | every task gets `PIPELINE_RUN_ID={{ run_id }}`, so `pipeline_runs` / `data_quality_runs` rows link to the DAG run |
 | DAG file | [`data-pipeline/airflow_home/dags/finvault_pipeline_dag.py`](data-pipeline/airflow_home/dags/finvault_pipeline_dag.py) |
+
+### Data engineering console (admin)
+
+Admins get a **Data engineering** page inside FinVault (`/data-engineering`, sidebar → Admin). The backend proxies Airflow's REST API (`/api/v2`), so the browser never sees Airflow credentials and customers get `403`.
+
+<p align="center">
+  <img src="docs/screenshots/data-engineering.png" alt="Admin Data engineering console with pipeline lineage, Airflow controls and data quality" width="92%" />
+  <br />
+  <em>Lineage coloured by the latest run, Airflow controls, run history and task timeline</em>
+</p>
+
+| Area | What it does |
+|---|---|
+| Status & freshness | API / Postgres / Airflow health, ledger rows, last good run, rows waiting for the pipeline |
+| Lineage | Postgres → Bronze → quality gate → Silver → Gold → serving, with live row counts and task state |
+| Airflow control | pause/schedule toggle, **Run pipeline** (optional full refresh), run history, per-run task timeline, live task logs, retry a task (clears it and everything downstream) |
+| Data quality | 16 checks across validity, consistency, completeness, uniqueness and timeliness — double-entry legs net to zero, running-balance continuity, wallet ↔ ledger reconciliation, event/direction validity, card and loan integrity. Severity + `blocking` flag, failing-row samples, run history |
+| Pipeline runs | duration chart and per-run counts (`Bronze in` vs `Silver new` shows idempotency at a glance) |
+| Lakehouse | Bronze / Silver / Gold datasets with rows, size and freshness, read in place with **DuckDB**; preview any Gold table |
+
+**Correctness guarantees (tested):** re-running a load or re-reading the watermark boundary adds **0** duplicate rows to Silver (left anti-join on `ledger_entry_id`); verified on 540,698 ledger rows — full refresh 17 s, incremental ~13 s.
+
+**What the checks found in the demo data:** in-app transfers always balance, but 253 wallets show running-balance breaks and 259 wallets don't reconcile to their ledger — a side effect of the seed script that redistributes dates without recomputing `balance_after`. These are flagged (non-blocking) for reconciliation, which is exactly the trade-off a blocking/flagged split exists for.
+
+Run the checks from a terminal too: `make quality` (or `python -m app.cli.data_quality --fail-on-blocking` from `backend/`).
 
 ### What we verified locally
 
-Across scheduled, manual, and incremental triggers, every DAG run below finished **Success**. Export stays fast (~4s when only a few new ledger rows are pulled); Spark transforms typically finish in ~10–14s on this sample.
+*(Screenshots below are from the native Airflow UI, taken before the quality gate was added.)* Across scheduled, manual, and incremental triggers, every DAG run below finished **Success**. Export stays fast (~4s when only a few new ledger rows are pulled); Spark transforms typically finish in ~10–14s on this sample.
 
 <p align="center">
   <img src="docs/screenshots/airflow-dag-runs.png" alt="Airflow Runs tab — scheduled and manual successes for finvault_ledger_pipeline" width="92%" />
@@ -223,12 +323,15 @@ Retries are real, not decorative. Early attempts can fail when workers race or S
 ### Run Airflow locally
 
 ```bash
-# From repo root — project .venv must already have PySpark + Postgres drivers
-python3 -m venv .venv-airflow && source .venv-airflow/bin/activate
-pip install "apache-airflow==3.3.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.2/constraints-3.13.txt"
+# From repo root. Airflow 3.3 supports Python ≤ 3.13; use a 3.13 interpreter.
+python3.13 -m venv .venv-airflow
+.venv-airflow/bin/pip install "apache-airflow==3.3.2" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.2/constraints-3.13.txt"
 
-export AIRFLOW_HOME="$(pwd)/data-pipeline/airflow_home"
-airflow standalone   # UI → http://127.0.0.1:8080
+# Pipeline venv (PySpark, Delta, Postgres driver) used by the DAG's tasks
+python3.13 -m venv .venv && .venv/bin/pip install -r data-pipeline/requirements.txt
+
+./scripts/airflow-standalone.sh   # UI → http://127.0.0.1:8080 · or `make airflow`
+make dev                          # Postgres check + API + Airflow + frontend in one terminal
 ```
 
 Login user is `admin`. The generated password is in  
@@ -334,10 +437,17 @@ Architecture: [`docs/architecture/jev-decision-layer.md`](docs/architecture/jev-
 - **50 animated preset avatars** with even distribution across users
 - Custom **JPG/PNG avatar upload**
 
-### Analytics
-- Real-time SQL aggregations: spending by category, monthly trends, income vs expense
-- **Balance trend**, activity breakdown, stat cards with sparklines
-- Tremor charts mapped to a consistent design system (`docs/design/design-system.md`)
+### Insights (analytics)
+- Six-tab **Insights** workspace computed from the full ledger: overview, cash flow, spending, patterns, products, explorer
+- Balance **forecast** with a ±1σ band, money-flow **Sankey**, calendar and weekday × hour **heatmaps**, treemap, radar, histogram
+- **Recurring-payment** and **2σ outlier** detection, month-to-date pace, runway gauge, card and loan analytics
+- Tools: **what-if savings simulator**, goal planner, pivot table, searchable transaction explorer with CSV export
+- Recharts with a validated, colour-blind-checked palette; every chart has a table view (`docs/design/design-system.md`)
+
+### Interface ("Vault" design system)
+- Public landing page with a canvas **particle flow field**, sticky scroll story (ledger → Jev → pipeline) and live API health
+- Designed per aspect ratio: phone tab bar + sheets, landscape rail, tablet rail, desktop sidebar, ultrawide side rail
+- ⌘K command palette, ⌘J Care assistant with visible **Jev triage**, light / dark themes, reduced-motion support
 
 ### Data platform
 - **CSV bulk import** with validation, deduplication, and error reporting
@@ -360,7 +470,7 @@ Architecture: [`docs/architecture/jev-decision-layer.md`](docs/architecture/jev-
 
 | Layer | Technologies |
 |---|---|
-| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query, React Hook Form, Zod, Tremor, Framer Motion, Lucide |
+| **Frontend** | React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query, React Hook Form, Zod, Recharts, Framer Motion, Lucide |
 | **Backend** | Python 3.12, FastAPI, Pydantic v2, SQLAlchemy 2, Alembic, JWT, bcrypt |
 | **Database** | PostgreSQL 15 (ACID, constraints, row-level locking on wallets) |
 | **Decisions** | TypeSafe Jev via OpenRouter Decisions API (`DecisionClient` + local stub) |
