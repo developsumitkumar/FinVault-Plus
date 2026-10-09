@@ -1,0 +1,417 @@
+{
+  "generated_at": "2026-10-09T03:52:23.385931+00:00",
+  "machine": {
+    "cpu": "Apple M4",
+    "cores": 10,
+    "memory_gb": 16,
+    "os": "Darwin 24.3.0",
+    "python": "3.13.14",
+    "spark": "4.2.0",
+    "duckdb": "1.5.6",
+    "driver_memory": "8g"
+  },
+  "scales": [
+    {
+      "target_rows": 1000000,
+      "timings": {
+        "generate": 9.376,
+        "silver_full_load": 7.461,
+        "gold_build": 10.228,
+        "merge": 5.988,
+        "full_rewrite": 4.155,
+        "partitioned_load": 6.654,
+        "zorder_optimize": 5.245
+      },
+      "rows": 1002908,
+      "users": 2500,
+      "bronze_bytes": 72745919,
+      "silver_bytes": 83480496,
+      "silver_rows_per_s": 134420,
+      "increment_rows": 10912,
+      "merge": {
+        "insert_only": {
+          "seconds": 3.236,
+          "inserted": 9988,
+          "updated": 0,
+          "files_added": 2,
+          "files_removed": 0,
+          "deletion_vectors_added": 0
+        },
+        "with_corrections": {
+          "seconds": 5.988,
+          "inserted": 9988,
+          "updated": 924,
+          "files_added": 16,
+          "files_removed": 16,
+          "deletion_vectors_added": 0
+        },
+        "with_corrections_deletion_vectors": {
+          "seconds": 4.413,
+          "inserted": 9988,
+          "updated": 924,
+          "files_added": 16,
+          "files_removed": 0,
+          "deletion_vectors_added": 16
+        }
+      },
+      "query_params": {
+        "user_id": "8e6a66b2-2eef-e51f-64d8-336edd752a11",
+        "year_month": "2026-09"
+      },
+      "layouts": {
+        "unpartitioned": {
+          "files": 16,
+          "user_lookup_s": 0.175,
+          "month_report_s": 0.155,
+          "full_scan_s": 0.256,
+          "user_lookup_files": 16,
+          "month_report_files": 16
+        },
+        "partitioned_by_month": {
+          "files": 24,
+          "user_lookup_s": 0.164,
+          "month_report_s": 0.203,
+          "full_scan_s": 0.446,
+          "user_lookup_files": 24,
+          "month_report_files": 1
+        },
+        "zorder_user_id": {
+          "files": 4,
+          "user_lookup_s": 0.147,
+          "month_report_s": 0.169,
+          "full_scan_s": 0.36,
+          "user_lookup_files": 1,
+          "month_report_files": 4
+        }
+      },
+      "small_files": {
+        "merges": 25,
+        "merges_s": 66.228,
+        "optimize_s": 2.261,
+        "before": {
+          "files": 41,
+          "user_lookup_s": 0.15,
+          "full_scan_s": 0.227
+        },
+        "after": {
+          "files": 6,
+          "user_lookup_s": 0.127,
+          "full_scan_s": 0.206
+        }
+      },
+      "engines": {
+        "spark_s": 0.256,
+        "duckdb_s": 0.005
+      },
+      "shuffle_partitions": {
+        "4": 6.091,
+        "16": 6.404,
+        "200": 16.038
+      }
+    },
+    {
+      "target_rows": 5000000,
+      "timings": {
+        "generate": 21.204,
+        "silver_full_load": 25.869,
+        "gold_build": 21.661,
+        "merge": 25.784,
+        "full_rewrite": 39.013,
+        "partitioned_load": 55.068,
+        "zorder_optimize": 34.125
+      },
+      "rows": 5012910,
+      "users": 12500,
+      "bronze_bytes": 354843875,
+      "silver_bytes": 406970019,
+      "silver_rows_per_s": 193781,
+      "increment_rows": 54412,
+      "merge": {
+        "insert_only": {
+          "seconds": 4.195,
+          "inserted": 49884,
+          "updated": 0,
+          "files_added": 8,
+          "files_removed": 0,
+          "deletion_vectors_added": 0
+        },
+        "with_corrections": {
+          "seconds": 25.784,
+          "inserted": 49884,
+          "updated": 4528,
+          "files_added": 16,
+          "files_removed": 16,
+          "deletion_vectors_added": 0
+        },
+        "with_corrections_deletion_vectors": {
+          "seconds": 14.413,
+          "inserted": 49884,
+          "updated": 4528,
+          "files_added": 16,
+          "files_removed": 0,
+          "deletion_vectors_added": 16
+        }
+      },
+      "query_params": {
+        "user_id": "8e6a66b2-2eef-e51f-64d8-336edd752a11",
+        "year_month": "2026-09"
+      },
+      "layouts": {
+        "unpartitioned": {
+          "files": 16,
+          "user_lookup_s": 0.326,
+          "month_report_s": 0.202,
+          "full_scan_s": 0.395,
+          "user_lookup_files": 16,
+          "month_report_files": 16
+        },
+        "partitioned_by_month": {
+          "files": 24,
+          "user_lookup_s": 0.223,
+          "month_report_s": 0.234,
+          "full_scan_s": 0.387,
+          "user_lookup_files": 24,
+          "month_report_files": 1
+        },
+        "zorder_user_id": {
+          "files": 24,
+          "user_lookup_s": 0.118,
+          "month_report_s": 0.191,
+          "full_scan_s": 0.359,
+          "user_lookup_files": 1,
+          "month_report_files": 24
+        }
+      },
+      "small_files": {
+        "merges": 25,
+        "merges_s": 52.326,
+        "optimize_s": 0.581,
+        "before": {
+          "files": 416,
+          "user_lookup_s": 0.224,
+          "full_scan_s": 0.4
+        },
+        "after": {
+          "files": 17,
+          "user_lookup_s": 0.175,
+          "full_scan_s": 0.411
+        }
+      },
+      "engines": {
+        "spark_s": 0.395,
+        "duckdb_s": 0.013
+      },
+      "shuffle_partitions": {
+        "4": 9.63,
+        "16": 8.719,
+        "200": 11.926
+      }
+    },
+    {
+      "target_rows": 10000000,
+      "timings": {
+        "generate": 23.757,
+        "silver_full_load": 51.456,
+        "gold_build": 42.785,
+        "merge": 42.298,
+        "full_rewrite": 59.268,
+        "partitioned_load": 84.223,
+        "zorder_optimize": 31.158
+      },
+      "rows": 10025887,
+      "users": 25000,
+      "bronze_bytes": 717558116,
+      "silver_bytes": 825543403,
+      "silver_rows_per_s": 194844,
+      "increment_rows": 108897,
+      "merge": {
+        "insert_only": {
+          "seconds": 7.891,
+          "inserted": 99901,
+          "updated": 0,
+          "files_added": 8,
+          "files_removed": 0,
+          "deletion_vectors_added": 0
+        },
+        "with_corrections": {
+          "seconds": 42.298,
+          "inserted": 99901,
+          "updated": 8996,
+          "files_added": 16,
+          "files_removed": 16,
+          "deletion_vectors_added": 0
+        },
+        "with_corrections_deletion_vectors": {
+          "seconds": 17.187,
+          "inserted": 99901,
+          "updated": 8996,
+          "files_added": 16,
+          "files_removed": 0,
+          "deletion_vectors_added": 16
+        }
+      },
+      "query_params": {
+        "user_id": "8e6a66b2-2eef-e51f-64d8-336edd752a11",
+        "year_month": "2026-09"
+      },
+      "layouts": {
+        "unpartitioned": {
+          "files": 16,
+          "user_lookup_s": 0.276,
+          "month_report_s": 0.223,
+          "full_scan_s": 0.518,
+          "user_lookup_files": 16,
+          "month_report_files": 16
+        },
+        "partitioned_by_month": {
+          "files": 24,
+          "user_lookup_s": 0.246,
+          "month_report_s": 0.218,
+          "full_scan_s": 0.569,
+          "user_lookup_files": 24,
+          "month_report_files": 1
+        },
+        "zorder_user_id": {
+          "files": 48,
+          "user_lookup_s": 0.119,
+          "month_report_s": 0.247,
+          "full_scan_s": 0.55,
+          "user_lookup_files": 2,
+          "month_report_files": 48
+        }
+      },
+      "small_files": {
+        "merges": 25,
+        "merges_s": 76.3,
+        "optimize_s": 0.44,
+        "before": {
+          "files": 416,
+          "user_lookup_s": 0.33,
+          "full_scan_s": 0.541
+        },
+        "after": {
+          "files": 17,
+          "user_lookup_s": 0.222,
+          "full_scan_s": 0.446
+        }
+      },
+      "engines": {
+        "spark_s": 0.518,
+        "duckdb_s": 0.019
+      },
+      "shuffle_partitions": {
+        "4": 14.656,
+        "16": 15.318,
+        "200": 15.556
+      }
+    },
+    {
+      "target_rows": 20000000,
+      "timings": {
+        "generate": 106.545,
+        "silver_full_load": 191.281,
+        "gold_build": 54.088,
+        "merge": 92.884,
+        "full_rewrite": 114.436,
+        "partitioned_load": 199.83,
+        "zorder_optimize": 69.154
+      },
+      "rows": 20052914,
+      "users": 50000,
+      "bronze_bytes": 1454414203,
+      "silver_bytes": 3012140185,
+      "silver_rows_per_s": 104835,
+      "increment_rows": 217605,
+      "merge": {
+        "insert_only": {
+          "seconds": 4.535,
+          "inserted": 199826,
+          "updated": 0,
+          "files_added": 8,
+          "files_removed": 0,
+          "deletion_vectors_added": 0
+        },
+        "with_corrections": {
+          "seconds": 92.884,
+          "inserted": 199826,
+          "updated": 17779,
+          "files_added": 16,
+          "files_removed": 16,
+          "deletion_vectors_added": 0
+        },
+        "with_corrections_deletion_vectors": {
+          "seconds": 40.684,
+          "inserted": 199826,
+          "updated": 17779,
+          "files_added": 16,
+          "files_removed": 0,
+          "deletion_vectors_added": 16
+        }
+      },
+      "query_params": {
+        "user_id": "8e6a66b2-2eef-e51f-64d8-336edd752a11",
+        "year_month": "2026-09"
+      },
+      "layouts": {
+        "unpartitioned": {
+          "files": 16,
+          "user_lookup_s": 0.389,
+          "month_report_s": 0.298,
+          "full_scan_s": 0.765,
+          "user_lookup_files": 16,
+          "month_report_files": 16
+        },
+        "partitioned_by_month": {
+          "files": 24,
+          "user_lookup_s": 0.406,
+          "month_report_s": 0.237,
+          "full_scan_s": 0.793,
+          "user_lookup_files": 24,
+          "month_report_files": 1
+        },
+        "zorder_user_id": {
+          "files": 178,
+          "user_lookup_s": 0.098,
+          "month_report_s": 0.281,
+          "full_scan_s": 0.662,
+          "user_lookup_files": 2,
+          "month_report_files": 178
+        }
+      },
+      "small_files": {
+        "merges": 25,
+        "merges_s": 159.588,
+        "optimize_s": 0.479,
+        "before": {
+          "files": 416,
+          "user_lookup_s": 1.627,
+          "full_scan_s": 1.11
+        },
+        "after": {
+          "files": 17,
+          "user_lookup_s": 1.126,
+          "full_scan_s": 0.833
+        }
+      },
+      "engines": {
+        "spark_s": 0.765,
+        "duckdb_s": 0.036
+      },
+      "shuffle_partitions": {
+        "4": 42.674,
+        "16": 47.042,
+        "200": 64.563
+      }
+    }
+  ],
+  "duration_s": 2340.8,
+  "findings": [
+    "**Near-linear until memory runs out.** From 1M to 20.1M rows (20\u00d7 the data) the Bronze \u2192 Silver load took 25.6\u00d7 as long; throughput peaked at 195k rows/s (10M rows) on one laptop. The last step (10M \u2192 20.1M) took 3.7\u00d7 as long for 2\u00d7 the rows: a 16 GB machine starts spilling there, the point where a cluster (or Databricks) takes over.",
+    "**Incremental MERGE beats rewriting.** At 20.1M rows an insert-only MERGE took 4.54 s, 25.2\u00d7 faster than the 114 s full rewrite. Scattered corrections forced MERGE to rewrite 16 files (92.88 s); with **deletion vectors** the same update rewrote 0 files and took 40.68 s (2.3\u00d7 faster than without).",
+    "**Partitioning by month pays off for monthly reports.** The one-month report read 1 of 24 files on the month-partitioned table vs 16 of 16 unpartitioned (0.24 s vs 0.30 s, 1.3\u00d7 faster).",
+    "**Z-ordering speeds up point lookups.** One customer's history read 2 of 178 files after Z-ordering by user_id vs 16 of 16 before (98 ms vs 0.39 s, 4.0\u00d7 faster). On the month-partitioned table the same lookup took 0.41 s: a layout helps the queries it was designed for.",
+    "**Small files are a tax.** 25 tiny merges cost 160 s (6.4 s per commit) and grew the table from 16 to 416 files; OPTIMIZE (0.48 s) compacted it to 17, and a full scan went from 1.11 s to 0.83 s. Batch small loads and compact regularly.",
+    "**Right-size the engine.** The same aggregation over 20.1M rows took 0.77 s in Spark and 36 ms in DuckDB (DuckDB 21.3\u00d7 faster). On one machine an in-process engine wins; Spark earns its overhead once data outgrows a node, which is why the warehouse and the admin console query with DuckDB.",
+    "**Tune shuffle partitions.** Building Gold at 20.1M rows with adaptive execution off: 4 partitions 42.67 s, 16 partitions 47.04 s, 200 partitions 64.56 s. 4 was fastest here; the default 200 suits clusters, and AQE (on in the pipeline) adapts this automatically."
+  ]
+}
